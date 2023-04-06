@@ -13,7 +13,7 @@ driver = webdriver.Chrome(options=options)
 
 
 #--| Parse or automation
-url = "https://www.oddsportal.com/tennis/spain/itf-m25-reus-men/damas-miguel-melero-kretzer-alejandro-OzabS6GT/#over-under;2"
+url = "https://www.oddsportal.com/handball/spain/liga-asobal/anaitasuna-irun-pA57bt7a/#1X2;2"
 #Home/Away : https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#home-away;1
 #1x2 : https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#1X2;2
 #Under/Over OPEN : https://www.oddsportal.com/basketball/brazil/nbb/minas-paulistano-htxX8KaS/#over-under;1;155.50;0
@@ -79,32 +79,28 @@ def container_open() :
     params : None
     returns : list of WebElements
     """
-    try :
-        toclick = driver.find_elements(By.XPATH, "//div[@class='relative flex flex-col']")
-    except NoSuchElementException:
-        return "You are not in a match page !"
-    else :
-        #looks like this :
-        #Over/Under +132.5 Points
-        #7
-        #1.84
-        #1.88
-        #93.0%
-        #Or looks like this :
-        #Over/Under =136.5 Points
-        #7
-        #-
-        #Now we check if the container is worth opening (at least 2 bookmakers for bet)
-        for container in toclick :
-            text = container.text.split("\n")
-            if int(text[1]) < 3 :
-                toclick.remove(container)
+    toclick = driver.find_elements(By.XPATH, "//div[@class='relative flex flex-col']")
+    #looks like this :
+    #Over/Under +132.5 Points
+    #7
+    #1.84
+    #1.88
+    #93.0%
+    #Or looks like this :
+    #Over/Under =136.5 Points
+    #7
+    #-
+    #Now we check if the container is worth opening (at least 2 bookmakers for bet)
+    for container in toclick :
+        text = container.text.split("\n")
+        if int(text[1]) < 3 :
+            toclick.remove(container)
 
-        for cont in toclick :
-            print(cont.text)
-            
-        return toclick
+    for cont in toclick :
+        print(cont.text)
+        
 
+    return toclick
 def container_find(type) :
     """
     def : This function will select the bookmaker containers and extract values
@@ -121,7 +117,7 @@ def container_find(type) :
     try :
         highest = driver.find_element(By.XPATH, "//div[@class='flex text-xs h-9 border-b border-[#E0E0E0] bg-gray-light bg-gray-med_light !h-[60px] !h-[60px]']")
     except NoSuchElementException:
-        return "You are not in a match page !"
+        return ""
     else :
         if highest != [] :
             
@@ -195,7 +191,7 @@ def extract(type) :
         buttons = driver.find_element(By.XPATH, "//div[@class='flex w-auto gap-2 pb-2 mt-2 ml-3 overflow-auto text-xs max-mt:hidden']")
     except NoSuchElementException:
         driver.quit()
-        return "You are not in a match page !"
+        return ""
     else :
         #Select non-clicked buttons
         toclick = buttons.find_elements(By.XPATH, "//div[@class='p-2 pl-3 pr-3 cursor-pointer bg-gray-medium']")
@@ -209,25 +205,12 @@ def extract(type) :
         return togive
 
         
-def extract_all() :
-    """
-    def : This function will cycle through all bet types
-    Function can start at any bet type of a match
-    For optimization purposes we will only consider the following :
-    1x2, Home/Away, Over/Under, Asian handicap
-    Other bet types will be ignored (I will make an argument for bet consideration)
-    params : None
-    returns : string
-    """
-    #We read the bet type where we start
-    current_type = driver.find_element(By.XPATH, "//li[@class='flex items-center justify-center pl-[13px] pr-[13px] pt-[11px] pb-[11px] opacity-80 text-xs cursor-pointer text-white-main h-max whitespace-nowrap odds-item active-odds']")
-    
+
 #--| Main
 start = time.time()
-#print(extract("Home/Away"))
+print(extract("1x2"))
 #print(container_find("Other"))
 #container_open()
-print(extract_all())
 end = time.time()
 driver.quit()
 
