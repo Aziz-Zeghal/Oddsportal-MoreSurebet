@@ -1,6 +1,6 @@
 # Oddsportal-MoreSurebet
 
-Oddsportal-MoreSurebet is a web scraper that finds odds for matches and outputs surebets. This project is unfinished and will always have updates.
+Oddsportal-MoreSurebet is a web crawler that finds odds for matches and outputs surebets. This project is unfinished and will always have updates.
 
 ## Features
 
