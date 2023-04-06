@@ -15,7 +15,8 @@ driver = webdriver.Chrome(options=options)
 #--| Parse or automation
 url = "https://www.oddsportal.com/handball/spain/liga-asobal/anaitasuna-irun-pA57bt7a/#1X2;2"
 #Home/Away : https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#home-away;1
-#1x2 : https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#1X2;2
+#1x2 no green : https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#1X2;2
+#1x2 green : https://www.oddsportal.com/football/argentina/liga-profesional/san-lorenzo-independiente-6aKyx0xI/#1X2;2
 #Under/Over OPEN : https://www.oddsportal.com/basketball/brazil/nbb/minas-paulistano-htxX8KaS/#over-under;1;155.50;0
 #Under/Over ToOpen : https://www.oddsportal.com/volleyball/bulgaria/superliga/neftohimic-burgas-pirin-razlog-Aa1R2YPA/#over-under;2
 #Under/Over ToOpen2 : https://www.oddsportal.com/tennis/spain/itf-m25-reus-men/damas-miguel-melero-kretzer-alejandro-OzabS6GT/#over-under;2
@@ -79,11 +80,7 @@ def container_open() :
     params : None
     returns : list of WebElements
     """
-    try :
-        toclick = driver.find_elements(By.XPATH, "//div[@class='relative flex flex-col']")
-    except NoSuchElementException:
-        return "No multiple containers here !"
-    else :
+    toclick = driver.find_elements(By.XPATH, "//div[@class='relative flex flex-col']")
         #looks like this :
         #Over/Under +132.5 Points
         #7
@@ -95,15 +92,17 @@ def container_open() :
         #7
         #-
         #Now we check if the container is worth openning (at least 2 bookmakers for bet)
-        for container in toclick :
-            text = container.text.split("\n")
-            if int(text[1]) < 3 :
-                toclick.remove(container)
+    for container in toclick :
+        text = container.text.split("\n")
+        if int(text[1]) < 3 :
+            toclick.remove(container)
 
-        for cont in toclick :
-            print(cont.text)
-            
-        return toclick
+    i = 1
+    print("The containers")
+    for cont in toclick :
+        print(cont.text)
+        
+    return toclick
 
 def container_find(type) :
     """
@@ -121,7 +120,7 @@ def container_find(type) :
     try :
         highest = driver.find_element(By.XPATH, "//p[@class='text-[10px] font-bold text-green-dark']")
     except NoSuchElementException:
-        return "no green profit"
+        return "1"
     else :
         if highest != [] :
             
@@ -130,12 +129,12 @@ def container_find(type) :
             try :
                 book1 = driver.find_element(By.XPATH, "//img[@title='1xBet']")
             except NoSuchElementException:
-                return "1xBet?"
+                return "2"
             else :
                 try :
                     book2 = driver.find_element(By.XPATH, "//img[@title='Pinnacle']")
                 except NoSuchElementException:
-                    return "Pinnacle?"
+                    return "2"
                 else :
                     if book1 != [] and book2 != []:
                         #One way to do it, is to check if the containers are yellow, but we will calculate everything
@@ -196,7 +195,7 @@ def extract(type) :
         buttons = driver.find_element(By.XPATH, "//div[@class='flex w-auto gap-2 pb-2 mt-2 ml-3 overflow-auto text-xs max-mt:hidden']")
     except NoSuchElementException:
         driver.quit()
-        return "Cannot find times !"
+        return "1"
     else :
         #Select non-clicked buttons
         toclick = buttons.find_elements(By.XPATH, "//div[@class='p-2 pl-3 pr-3 cursor-pointer bg-gray-medium']")
@@ -237,12 +236,67 @@ def extract_all() :
     return togive
 
 #--| Main
+
+#--| Function test
+#1 : Green profit not found OR containers not found for container_open
+#2 : Works as intended, but did not find what we wanted
+#“” : Just no profit found
 start = time.time()
-#print(extract("Home/Away"))
-#print(container_find("Other"))
-#container_open()
-#print(container_open())
+
+#test container_open
+def test_container_open():
+    # On random page
+    driver.get("https://www.google.com/search?client=opera-gx&q=google+traduction&sourceid=opera&ie=UTF-8&oe=UTF-8")
+    sleep(4)
+    print(container_open() == [])
+    # On 1x2 page
+    driver.get("https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#1X2;2")
+    sleep(4)
+    print(container_open() == [])
+
+    # On Under/Over page OPEN
+    driver.get("https://www.oddsportal.com/basketball/brazil/nbb/minas-paulistano-htxX8KaS/#over-under;1;155.50;0")
+    sleep(4)
+    print(container_open() != [])
+
+    # On Under/Over page CLOSED
+    #FIXME : work is good, but filter faulty
+    driver.get("https://www.oddsportal.com/volleyball/bulgaria/superliga/neftohimic-burgas-pirin-razlog-Aa1R2YPA/#over-under;2")
+    sleep(4)
+    print(container_open() != [])
+
+#test container_find
+def test_container_find():
+    # On random page
+    driver.get("https://www.google.com/search?client=opera-gx&q=google+traduction&sourceid=opera&ie=UTF-8&oe=UTF-8")
+
+    print(container_find("1x2") == "1")
+    print(container_find("Home/Away") == "1")
+    print("\n")
+    #print(container_find("Over/Under") == "1")
+
+    # On 1x2 page with no green
+    driver.get("https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#1X2;2")
+
+    print(container_find("1x2") == "1")
+    print(container_find("Home/Away") == "1")
+    #print(container_find("Over/Under") == "1")
+    print("\n")
+    # On 1x2 page with green
+    driver.get("https://www.oddsportal.com/football/argentina/liga-profesional/san-lorenzo-independiente-6aKyx0xI/#1X2;2")
+
+    print(container_find("1x2") != "1")
+    print(container_find("Home/Away") == "1")
+    print("\n")
+    
+    # On Home/Away page with no green
+    driver.get("https://www.oddsportal.com/football/argentina/liga-profesional/san-lorenzo-independiente-6aKyx0xI/#1X2;3")
+
+    print(container_find("1x2"))
+    print(container_find("Home/Away"))
+    print("\n")
+
+test_container_find()
 end = time.time()
 driver.quit()
-
 print("it took " + str(end - start) + " time")
