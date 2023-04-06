@@ -13,12 +13,10 @@ driver = webdriver.Chrome(options=options)
 
 
 #--| Parse or automation
-url = "https://www.oddsportal.com/handball/spain/liga-asobal/anaitasuna-irun-pA57bt7a/#1X2;2"
+url = "https://www.oddsportal.com/basketball/brazil/nbb/minas-paulistano-htxX8KaS/#over-under;1;155.50;0"
 #Home/Away : https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#home-away;1
 #1x2 : https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#1X2;2
 #Under/Over OPEN : https://www.oddsportal.com/basketball/brazil/nbb/minas-paulistano-htxX8KaS/#over-under;1;155.50;0
-#Under/Over ToOpen : https://www.oddsportal.com/volleyball/bulgaria/superliga/neftohimic-burgas-pirin-razlog-Aa1R2YPA/#over-under;2
-#Under/Over ToOpen2 : https://www.oddsportal.com/tennis/spain/itf-m25-reus-men/damas-miguel-melero-kretzer-alejandro-OzabS6GT/#over-under;2
 driver.get(url)
 
 #--| Functions
@@ -70,38 +68,7 @@ def transform(text, n) :
             give.append(float(odds[i + 1]))
     return give
 
-def container_open() :
-    """
-    def : This function will ONLY retrieve the bet types containers worth opening
-    "Other" bet types have many containers
-    Each container has a different argument for the bet
-    Example : Under/Over has 155.5, 156, etc.
-    params : None
-    returns : list of WebElements
-    """
-    toclick = driver.find_elements(By.XPATH, "//div[@class='relative flex flex-col']")
-    #looks like this :
-    #Over/Under +132.5 Points
-    #7
-    #1.84
-    #1.88
-    #93.0%
-    #Or looks like this :
-    #Over/Under =136.5 Points
-    #7
-    #-
-    #Now we check if the container is worth opening (at least 2 bookmakers for bet)
-    for container in toclick :
-        text = container.text.split("\n")
-        if int(text[1]) < 3 :
-            toclick.remove(container)
-
-    for cont in toclick :
-        print(cont.text)
-        
-
-    return toclick
-def container_find(type) :
+def container_find(type):
     """
     def : This function will select the bookmaker containers and extract values
     In the future, this function will be changed to include the user's input
@@ -208,9 +175,8 @@ def extract(type) :
 
 #--| Main
 start = time.time()
-print(extract("1x2"))
-#print(container_find("Other"))
-#container_open()
+#print(extract("Home/Away"))
+print(container_find("Other"))
 end = time.time()
 driver.quit()
 
