@@ -13,7 +13,12 @@ driver = webdriver.Chrome(options=options)
 
 
 #--| Parse or automation
-url = "https://www.oddsportal.com/handball/spain/liga-asobal/guadalajara-torrelavega-bD9Bc0M5/#1X2;2"
+url = "https://www.oddsportal.com/tennis/spain/itf-m25-reus-men/damas-miguel-melero-kretzer-alejandro-OzabS6GT/#over-under;2"
+#Home/Away : https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#home-away;1
+#1x2 : https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#1X2;2
+#Under/Over OPEN : https://www.oddsportal.com/basketball/brazil/nbb/minas-paulistano-htxX8KaS/#over-under;1;155.50;0
+#Under/Over ToOpen : https://www.oddsportal.com/volleyball/bulgaria/superliga/neftohimic-burgas-pirin-razlog-Aa1R2YPA/#over-under;2
+#Under/Over ToOpen2 : https://www.oddsportal.com/tennis/spain/itf-m25-reus-men/damas-miguel-melero-kretzer-alejandro-OzabS6GT/#over-under;2
 driver.get(url)
 
 #--| Functions
@@ -65,7 +70,42 @@ def transform(text, n) :
             give.append(float(odds[i + 1]))
     return give
 
-def extract(type):
+def container_open() :
+    """
+    def : This function will ONLY retrieve the bet types containers worth opening
+    "Other" bet types have many containers
+    Each container has a different argument for the bet
+    Example : Under/Over has 155.5, 156, etc.
+    params : None
+    returns : list of WebElements
+    """
+    try :
+        toclick = driver.find_elements(By.XPATH, "//div[@class='relative flex flex-col']")
+    except NoSuchElementException:
+        return "You are not in a match page !"
+    else :
+        #looks like this :
+        #Over/Under +132.5 Points
+        #7
+        #1.84
+        #1.88
+        #93.0%
+        #Or looks like this :
+        #Over/Under =136.5 Points
+        #7
+        #-
+        #Now we check if the container is worth opening (at least 2 bookmakers for bet)
+        for container in toclick :
+            text = container.text.split("\n")
+            if int(text[1]) < 3 :
+                toclick.remove(container)
+
+        for cont in toclick :
+            print(cont.text)
+            
+        return toclick
+
+def container_find(type) :
     """
     def : This function will select the bookmaker containers and extract values
     In the future, this function will be changed to include the user's input
@@ -81,8 +121,7 @@ def extract(type):
     try :
         highest = driver.find_element(By.XPATH, "//div[@class='flex text-xs h-9 border-b border-[#E0E0E0] bg-gray-light bg-gray-med_light !h-[60px] !h-[60px]']")
     except NoSuchElementException:
-        print("No opportunity")
-        return ""
+        return "You are not in a match page !"
     else :
         if highest != [] :
             
@@ -91,13 +130,11 @@ def extract(type):
             try :
                 book1 = driver.find_element(By.XPATH, "//img[@title='1xBet']")
             except NoSuchElementException:
-                print("1xBet missing")
                 return ""
             else :
                 try :
                     book2 = driver.find_element(By.XPATH, "//img[@title='Pinnacle']")
                 except NoSuchElementException:
-                    print("Pinnacle missing")
                     return ""
                 else :
                     if book1 != [] and book2 != []:
@@ -106,7 +143,7 @@ def extract(type):
                         odds1 = (book1.find_element(By.XPATH, "../../..")).text
                         odds2 = (book2.find_element(By.XPATH, "../../..")).text
                         
-
+        togive = ""
         match type :
             
             #We get the odds, from index 1 to 3 (we don't want the bookmaker name)
@@ -120,24 +157,36 @@ def extract(type):
             
             #All other bet types have 3 odds, but the first one is special
             case "Other" :
+                #The first value is the bet argument
+                #Example : Under/Over will have
+                #odds1 = [155.5, 1.64, 2.07]
+                #155.5 is the total for Under/Over
+                #TODO : change the output with the bet type
+                #TODO : change transform (repeated operations)
                 all_odds = transform(odds1, 3) + transform(odds2, 3)
-                #TODO
-        togive = ""
+                togive += "For " + str(all_odds.pop(0)) + "\n"
+                all_odds.pop(2)
+                i = 2
+                
         (max_odds, books) = sel(all_odds)
         profit = calculate(max_odds)
+        
         if profit < 0 :
             return ""
+        
         for i in range(0, i) :
             togive += str(max_odds[i]) + " " + books[i] + "\n"
         togive += "Profit : " + str(profit) + "%\n"
+        
         return togive
 
-def all_one_x_two() :
+def extract(type) :
     """
     def : This function will cycles through FT, 1st H etc.
-    returns : nothing (temporary)
+    params : string
+    returns : string
     """
-    temp = extract("1x2")
+    temp = container_find(type)
     togive = "\n" + driver.title + "\n"
     if temp != "" :
         togive += "\nFirst time\n" + temp
@@ -146,24 +195,39 @@ def all_one_x_two() :
         buttons = driver.find_element(By.XPATH, "//div[@class='flex w-auto gap-2 pb-2 mt-2 ml-3 overflow-auto text-xs max-mt:hidden']")
     except NoSuchElementException:
         driver.quit()
-        return ""
+        return "You are not in a match page !"
     else :
         #Select non-clicked buttons
         toclick = buttons.find_elements(By.XPATH, "//div[@class='p-2 pl-3 pr-3 cursor-pointer bg-gray-medium']")
         for button in toclick :
             time = "\n" + button.text + "\n"
             button.click()
-            temp = extract("1x2")
+            temp = container_find(type)
             if temp != "" :
                 togive += time + temp
         
         return togive
 
         
-
+def extract_all() :
+    """
+    def : This function will cycle through all bet types
+    Function can start at any bet type of a match
+    For optimization purposes we will only consider the following :
+    1x2, Home/Away, Over/Under, Asian handicap
+    Other bet types will be ignored (I will make an argument for bet consideration)
+    params : None
+    returns : string
+    """
+    #We read the bet type where we start
+    current_type = driver.find_element(By.XPATH, "//li[@class='flex items-center justify-center pl-[13px] pr-[13px] pt-[11px] pb-[11px] opacity-80 text-xs cursor-pointer text-white-main h-max whitespace-nowrap odds-item active-odds']")
+    
 #--| Main
 start = time.time()
-print(all_one_x_two())
+#print(extract("Home/Away"))
+#print(container_find("Other"))
+#container_open()
+print(extract_all())
 end = time.time()
 driver.quit()
 
