@@ -13,7 +13,7 @@ driver = webdriver.Chrome(options=options)
 
 
 #--| Parse or automation
-url = "https://www.oddsportal.com/handball/spain/liga-asobal/anaitasuna-irun-pA57bt7a/#1X2;2"
+url = "https://www.oddsportal.com/football/argentina/liga-profesional/san-lorenzo-independiente-6aKyx0xI/#1X2;2"
 #Home/Away : https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#home-away;1
 #1x2 no green : https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#1X2;2
 #1x2 green : https://www.oddsportal.com/football/argentina/liga-profesional/san-lorenzo-independiente-6aKyx0xI/#1X2;2
@@ -269,7 +269,6 @@ def test_container_open():
 def test_container_find():
     # On random page
     driver.get("https://www.google.com/search?client=opera-gx&q=google+traduction&sourceid=opera&ie=UTF-8&oe=UTF-8")
-
     print(container_find("1x2") == "1")
     print(container_find("Home/Away") == "1")
     print("\n")
@@ -277,23 +276,31 @@ def test_container_find():
 
     # On 1x2 page with no green
     driver.get("https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#1X2;2")
-
     print(container_find("1x2") == "1")
     print(container_find("Home/Away") == "1")
     #print(container_find("Over/Under") == "1")
     print("\n")
+    
     # On 1x2 page with green
     driver.get("https://www.oddsportal.com/football/argentina/liga-profesional/san-lorenzo-independiente-6aKyx0xI/#1X2;2")
-
-    print(container_find("1x2") != "1")
-    print(container_find("Home/Away") == "1")
+    print(container_find("1x2") == "")
+    #This test is cursed, as it will calculate
+    #FIX
+    #print(container_find("Home/Away") == "1")
     print("\n")
     
     # On Home/Away page with no green
-    driver.get("https://www.oddsportal.com/football/argentina/liga-profesional/san-lorenzo-independiente-6aKyx0xI/#1X2;3")
+    driver.get("https://www.oddsportal.com/basketball/puerto-rico/bsn/grises-de-humacao-leones-de-ponce-pQDKRBCG/#home-away;1")
+    #FIX
+    #print(container_find("1x2") == "1")
+    print(container_find("Home/Away") == "1")
+    print("\n")
 
-    print(container_find("1x2"))
-    print(container_find("Home/Away"))
+    # On Home/Away page with green
+    driver.get("https://www.oddsportal.com/hockey/usa/nhl/columbus-blue-jackets-new-york-rangers-Am1R42bg/#home-away;1")
+    #FIX
+    #print(container_find("1x2") == "1")
+    print(container_find("Home/Away") == "")
     print("\n")
 
 test_container_find()
