@@ -13,13 +13,7 @@ driver = webdriver.Chrome(options=options)
 
 
 #--| Parse or automation
-url = "https://www.oddsportal.com/football/argentina/liga-profesional/san-lorenzo-independiente-6aKyx0xI/#1X2;2"
-#Home/Away : https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#home-away;1
-#1x2 no green : https://www.oddsportal.com/basketball/bulgaria/nbl/beroe-rilski-sportist-UZ823qD3/#1X2;2
-#1x2 green : https://www.oddsportal.com/football/argentina/liga-profesional/san-lorenzo-independiente-6aKyx0xI/#1X2;2
-#Under/Over OPEN : https://www.oddsportal.com/basketball/brazil/nbb/minas-paulistano-htxX8KaS/#over-under;1;155.50;0
-#Under/Over ToOpen : https://www.oddsportal.com/volleyball/bulgaria/superliga/neftohimic-burgas-pirin-razlog-Aa1R2YPA/#over-under;2
-#Under/Over ToOpen2 : https://www.oddsportal.com/tennis/spain/itf-m25-reus-men/damas-miguel-melero-kretzer-alejandro-OzabS6GT/#over-under;2
+url = "https://www.oddsportal.com/volleyball/romania/divizia-a1-women/alba-blaj-rapid-bucuresti-EXZIV2LU/#home-away;2"
 driver.get(url)
 sleep(2)
 #--| Functions
@@ -146,7 +140,7 @@ def container_find(type) :
         match type :
             
             #We get the odds, from index 1 to 3 (we don't want the bookmaker name)
-            case "1x2" :
+            case "1X2" :
                 all_odds = transform(odds1, 3) + transform(odds2, 3)
                 i = 3
             
@@ -185,11 +179,7 @@ def extract(type) :
     params : string
     returns : string
     """
-    temp = container_find(type)
-    togive = "\n" + driver.title + "\n"
-    if temp != "" :
-        #TODO : not always first time
-        togive += "\nFirst time\n" + temp
+    togive = container_find(type)
     #Find buttons container, for optimization purposes
     try :
         buttons = driver.find_element(By.XPATH, "//div[@class='flex w-auto gap-2 pb-2 mt-2 ml-3 overflow-auto text-xs max-mt:hidden']")
@@ -219,21 +209,20 @@ def extract_all() :
     params : None
     returns : string
     """
+    #Refuse cookies
+    try :
+        refuse = driver.find_element(By.ID, "onetrust-reject-all-handler")
+        refuse.click()
+    except NoSuchElementException:
+        pass
     #We read the bet type where we start
     current_type = driver.find_element(By.XPATH, "//li[@class='flex items-center justify-center pl-[13px] pr-[13px] pt-[11px] pb-[11px] opacity-80 text-xs cursor-pointer text-white-main h-max whitespace-nowrap odds-item active-odds']")
     bet_name = current_type.text
-    print(bet_name)
-    match bet_name :
-        case "1x2" :
-            togive = extract("1x2")
-
-        case "Home/Away" :
-            togive = extract("Home/Away")
-
-        case _:
-            togive = "ahh"
+    togive = extract(bet_name)
+    if togive != "" :
+        togive = driver.title + "\n" + bet_name  + "\n" + togive
         
-    return togive
+    return togive + "\n"
 
 #--| Main
 
@@ -303,7 +292,7 @@ def test_container_find():
     print(container_find("Home/Away") == "")
     print("\n")
 
-test_container_find()
+print(extract_all())
 end = time.time()
 driver.quit()
 print("it took " + str(end - start) + " time")
