@@ -13,9 +13,10 @@ driver = webdriver.Chrome(options=options)
 
 
 #--| Parse or automation
-url = "https://www.oddsportal.com/volleyball/romania/divizia-a1-women/alba-blaj-rapid-bucuresti-EXZIV2LU/#home-away;2"
+url = "https://www.oddsportal.com/basketball/usa/nba/brooklyn-nets-philadelphia-76ers-YHQsWscC/#1X2;2"
 driver.get(url)
-sleep(2)
+sleep(1)
+
 #--| Functions
 def calculate(odds) :
     """
@@ -90,11 +91,6 @@ def container_open() :
         text = container.text.split("\n")
         if int(text[1]) < 3 :
             toclick.remove(container)
-
-    i = 1
-    print("The containers")
-    for cont in toclick :
-        print(cont.text)
         
     return toclick
 
@@ -114,7 +110,7 @@ def container_find(type) :
     try :
         highest = driver.find_element(By.XPATH, "//p[@class='text-[10px] font-bold text-green-dark']")
     except NoSuchElementException:
-        return "1"
+        return ""
     else :
         if highest != [] :
             
@@ -123,12 +119,12 @@ def container_find(type) :
             try :
                 book1 = driver.find_element(By.XPATH, "//img[@title='1xBet']")
             except NoSuchElementException:
-                return "2"
+                return ""
             else :
                 try :
                     book2 = driver.find_element(By.XPATH, "//img[@title='Pinnacle']")
                 except NoSuchElementException:
-                    return "2"
+                    return ""
                 else :
                     if book1 != [] and book2 != []:
                         #One way to do it, is to check if the containers are yellow, but we will calculate everything
@@ -163,7 +159,6 @@ def container_find(type) :
                 
         (max_odds, books) = sel(all_odds)
         profit = calculate(max_odds)
-        
         if profit < 0 :
             return ""
         
@@ -176,6 +171,7 @@ def container_find(type) :
 def extract(type) :
     """
     def : This function will cycles through FT, 1st H etc.
+    For now, we will dodge Q1, Q2 etc.
     params : string
     returns : string
     """
@@ -185,16 +181,17 @@ def extract(type) :
         buttons = driver.find_element(By.XPATH, "//div[@class='flex w-auto gap-2 pb-2 mt-2 ml-3 overflow-auto text-xs max-mt:hidden']")
     except NoSuchElementException:
         driver.quit()
-        return "1"
+        return ""
     else :
         #Select non-clicked buttons
         toclick = buttons.find_elements(By.XPATH, "//div[@class='p-2 pl-3 pr-3 cursor-pointer bg-gray-medium']")
         for button in toclick :
-            time = "\n" + button.text + "\n"
-            button.click()
-            temp = container_find(type)
-            if temp != "" :
-                togive += time + temp
+            if button.text[1] != "Q" :
+                time = "\n" + button.text + "\n"
+                button.click()
+                temp = container_find(type)
+                if temp != "" :
+                    togive += time + temp
         
         return togive
 
@@ -218,11 +215,26 @@ def extract_all() :
     #We read the bet type where we start
     current_type = driver.find_element(By.XPATH, "//li[@class='flex items-center justify-center pl-[13px] pr-[13px] pt-[11px] pb-[11px] opacity-80 text-xs cursor-pointer text-white-main h-max whitespace-nowrap odds-item active-odds']")
     bet_name = current_type.text
-    togive = extract(bet_name)
-    if togive != "" :
-        togive = driver.title + "\n" + bet_name  + "\n" + togive
-        
-    return togive + "\n"
+    title = driver.title
+    temp = extract(bet_name)
+    print(bet_name)
+    if temp != "" :
+        title += f"\n{bet_name}\n{temp}"
+    
+    #Find bet types not clicked
+    bets = driver.find_elements(By.XPATH, "//li[@class='flex items-center justify-center pl-[13px] pr-[13px] pt-[11px] pb-[11px] opacity-80 text-xs cursor-pointer text-white-main h-max whitespace-nowrap odds-item']")
+    
+    #For now, we will only consider the first bet type
+    bet_name = bets[0].text
+    bets[0].click()
+    temp = extract(bet_name)
+    if temp != "" :
+        title += f"\n{bet_name}\n{temp}"
+    
+    if title != driver.title :
+        return title
+    return ""
+    
 
 #--| Main
 
@@ -277,7 +289,7 @@ def test_container_find():
     #FIX
     #print(container_find("Home/Away") == "1")
     print("\n")
-    
+      
     # On Home/Away page with no green
     driver.get("https://www.oddsportal.com/basketball/puerto-rico/bsn/grises-de-humacao-leones-de-ponce-pQDKRBCG/#home-away;1")
     #FIX
