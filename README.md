@@ -19,3 +19,7 @@ Oddsportal-MoreSurebet is a web crawler that finds odds for matches and outputs 
 
 The goal of this project is to learn how to use Selenium in Python. By building a web scraper that finds surebets, I hope to improve my skills in web scraping and data analysis. <br>
 As a future data scientist, my goal is to learn more about automation using Python and related tools such as Selenium.
+
+## Misc
+
+This code is not perfect it was my first try. I will add more features in the future but for now this project is in pause.
